@@ -1,0 +1,23 @@
+<div class="auth-page">
+  <a routerLink="/" class="logo">Shop<span class="accent">Nx</span></a>
+  <div class="auth-card">
+    <h1>Sign in</h1>
+    @if (error()) { <div class="error-box">{{ error() }}</div> }
+    <form (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" [(ngModel)]="email" name="email" required />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" [(ngModel)]="password" name="password" required />
+      </mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="submitting()" class="submit-btn">
+        {{ submitting() ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+    <p class="terms">By continuing, you agree to ShopNx's Conditions of Use and Privacy Notice.</p>
+  </div>
+  <div class="divider-row"><span>New to ShopNx?</span></div>
+  <a mat-stroked-button routerLink="/register" class="create-btn">Create your ShopNx account</a>
+</div>

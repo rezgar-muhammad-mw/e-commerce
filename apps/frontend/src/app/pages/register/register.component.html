@@ -1,0 +1,33 @@
+<div class="auth-page">
+  <a routerLink="/" class="logo">Shop<span class="accent">Nx</span></a>
+  <div class="auth-card">
+    <h1>Create account</h1>
+    @if (error()) { <div class="error-box">{{ error() }}</div> }
+    <form (ngSubmit)="onSubmit()">
+      <div class="name-row">
+        <mat-form-field appearance="outline">
+          <mat-label>First name</mat-label>
+          <input matInput [(ngModel)]="firstName" name="firstName" required />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Last name</mat-label>
+          <input matInput [(ngModel)]="lastName" name="lastName" required />
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" [(ngModel)]="email" name="email" required />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" [(ngModel)]="password" name="password" required />
+        <mat-hint>At least 6 characters</mat-hint>
+      </mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="submitting()" class="submit-btn">
+        {{ submitting() ? 'Creating...' : 'Create your ShopNx account' }}
+      </button>
+    </form>
+    <p class="terms">By creating an account, you agree to ShopNx's Conditions of Use and Privacy Notice.</p>
+    <div class="signin-link">Already have an account? <a routerLink="/login">Sign in</a></div>
+  </div>
+</div>

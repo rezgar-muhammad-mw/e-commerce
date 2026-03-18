@@ -1,0 +1,87 @@
+<div class="page">
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="title">
+          @if (searchValue) { Results for "{{ searchValue }}" }
+          @else if (getSelectedCategoryName()) { {{ getSelectedCategoryName() }} }
+          @else { All Products }
+        </h1>
+        <p class="count">{{ totalProducts() }} results</p>
+      </div>
+      <mat-form-field appearance="outline" class="sort-field">
+        <mat-label>Sort by</mat-label>
+        <mat-select [(ngModel)]="sortOption" (selectionChange)="onSortChange()">
+          <mat-option value="createdAt-DESC">Newest</mat-option>
+          <mat-option value="price-ASC">Price: Low to High</mat-option>
+          <mat-option value="price-DESC">Price: High to Low</mat-option>
+          <mat-option value="name-ASC">Name: A-Z</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="filter-group">
+          <h3>Category</h3>
+          <ul>
+            <li (click)="selectedCategoryId = undefined; onFilterChange()" [class.active]="!selectedCategoryId">All</li>
+            @for (cat of categories(); track cat.id) {
+              <li (click)="selectedCategoryId = cat.id; onFilterChange()" [class.active]="selectedCategoryId === cat.id">
+                {{ cat.name }} <span class="cat-count">({{ cat.productCount }})</span>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="filter-group">
+          <h3>Price</h3>
+          <ul>
+            <li (click)="setPriceRange(0, 25)">Under $25</li>
+            <li (click)="setPriceRange(25, 50)">$25 to $50</li>
+            <li (click)="setPriceRange(50, 100)">$50 to $100</li>
+            <li (click)="setPriceRange(100, 200)">$100 to $200</li>
+            <li (click)="setPriceRange(200, undefined)">$200 &amp; Above</li>
+          </ul>
+          <div class="price-inputs">
+            <input type="number" [(ngModel)]="minPrice" placeholder="Min" />
+            <span>-</span>
+            <input type="number" [(ngModel)]="maxPrice" placeholder="Max" />
+            <button mat-stroked-button (click)="onFilterChange()">Go</button>
+          </div>
+        </div>
+        @if (hasActiveFilters()) {
+          <a class="clear-link" (click)="resetFilters()">Clear all filters</a>
+        }
+      </aside>
+
+      <!-- Grid -->
+      <div class="grid-area">
+        @if (loading()) {
+          <div class="spinner-box"><mat-spinner diameter="40"></mat-spinner></div>
+        } @else if (products().length === 0) {
+          <div class="empty">
+            <h3>No results found</h3>
+            <p>Try different filters or search terms.</p>
+            <a class="clear-link" (click)="resetFilters()">Clear all filters</a>
+          </div>
+        } @else {
+          <div class="product-grid">
+            @for (product of products(); track product.id) {
+              <app-product-card [product]="product" />
+            }
+          </div>
+          @if (totalPages() > 1) {
+            <div class="pagination">
+              <button mat-stroked-button [disabled]="page() <= 1" (click)="goToPage(page()-1)">Previous</button>
+              @for (p of pageNumbers(); track p) {
+                <button mat-stroked-button [class.active-page]="p === page()" (click)="goToPage(p)">{{ p }}</button>
+              }
+              <button mat-stroked-button [disabled]="page() >= totalPages()" (click)="goToPage(page()+1)">Next</button>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,36 @@
+<button class="back-top" (click)="scrollToTop()">Back to top</button>
+<footer class="footer">
+  <div class="footer-grid">
+    <div>
+      <h4>Get to Know Us</h4>
+      <ul>
+        <li>About ShopNx</li>
+        <li>Careers</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Shop With Us</h4>
+      <ul>
+        <li><a routerLink="/products">All Products</a></li>
+        <li><a routerLink="/cart">Your Cart</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Categories</h4>
+      <ul>
+        <li><a routerLink="/products" [queryParams]="{categoryId: 1}">Electronics</a></li>
+        <li><a routerLink="/products" [queryParams]="{categoryId: 2}">Clothing</a></li>
+        <li><a routerLink="/products" [queryParams]="{categoryId: 3}">Books</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Help</h4>
+      <ul>
+        <li>Shipping</li>
+        <li>Returns</li>
+        <li>Customer Service</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">&copy; 2026 ShopNx. All rights reserved.</div>
+</footer>

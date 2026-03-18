@@ -1,0 +1,21 @@
+<a [routerLink]="['/products', product().id]" class="card-link">
+  <mat-card class="card">
+    <div class="img-box">
+      <span class="initial">{{ product().name.charAt(0) }}</span>
+    </div>
+    <mat-card-content class="info">
+      <p class="name">{{ product().name }}</p>
+      <div class="price">
+        <span class="dollar">$</span>
+        <span class="whole">{{ getWhole() }}</span>
+        <span class="cents">{{ getCents() }}</span>
+      </div>
+      @if (product().stock > 0) {
+        <p class="stock in">In stock</p>
+      } @else {
+        <p class="stock out">Unavailable</p>
+      }
+      <p class="cat">{{ product().category?.name }}</p>
+    </mat-card-content>
+  </mat-card>
+</a>

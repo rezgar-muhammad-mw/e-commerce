@@ -1,0 +1,48 @@
+<div class="page">
+  <div class="container">
+    @if (loading()) {
+      <div class="spinner-box"><mat-spinner diameter="40"></mat-spinner></div>
+    } @else if (!cartStore.cart() || cartStore.cart()!.items.length === 0) {
+      <div class="empty-box">
+        <h2>Your ShopNx Cart is empty</h2>
+        <p>Your shopping cart is waiting. Give it purpose — fill it with products you love.</p>
+        <a mat-flat-button routerLink="/products" class="shop-btn">Continue shopping</a>
+      </div>
+    } @else {
+      <div class="cart-layout">
+        <div class="cart-items">
+          <h1 class="cart-title">Shopping Cart</h1>
+          <div class="cart-header"><span>Price</span></div>
+          @for (item of cartStore.cart()!.items; track item.id; let last = $last) {
+            <div class="cart-row" [class.no-border]="last">
+              <a [routerLink]="['/products', item.productId]" class="item-img">
+                <span class="initial">{{ item.product?.name?.charAt(0) }}</span>
+              </a>
+              <div class="item-info">
+                <a [routerLink]="['/products', item.productId]" class="item-name">{{ item.product?.name }}</a>
+                <p class="item-stock">In Stock</p>
+                <div class="item-actions">
+                  <label>Qty:</label>
+                  <select [ngModel]="item.quantity" (ngModelChange)="updateQty(item.id, $event)" class="qty-select">
+                    @for (q of qtyOptions; track q) { <option [ngValue]="q">{{ q }}</option> }
+                  </select>
+                  <span class="divider">|</span>
+                  <a class="delete-link" (click)="remove(item.id)">Delete</a>
+                </div>
+              </div>
+              <div class="item-price">{{ item.price * item.quantity | currency }}</div>
+            </div>
+          }
+          <div class="subtotal-row">
+            Subtotal ({{ cartStore.itemCount() }} items): <strong>{{ cartStore.totalPrice() | currency }}</strong>
+          </div>
+        </div>
+        <div class="checkout-box">
+          <p class="free-msg">Your order qualifies for FREE Shipping.</p>
+          <p class="sub-text">Subtotal ({{ cartStore.itemCount() }} items): <strong>{{ cartStore.totalPrice() | currency }}</strong></p>
+          <button mat-flat-button class="checkout-btn">Proceed to checkout</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

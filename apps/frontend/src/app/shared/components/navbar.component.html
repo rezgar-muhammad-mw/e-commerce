@@ -1,0 +1,50 @@
+<mat-toolbar class="navbar">
+  <a routerLink="/" class="logo">Shop<span class="logo-accent">Nx</span></a>
+
+  <div class="search-box">
+    <input
+      type="text"
+      [(ngModel)]="searchQuery"
+      (keyup.enter)="onSearch()"
+      placeholder="Search products"
+      class="search-input"
+    />
+    <button class="search-btn" (click)="onSearch()">
+      <mat-icon>search</mat-icon>
+    </button>
+  </div>
+
+  <span class="spacer"></span>
+
+  @if (authStore.isAuthenticated()) {
+    <button mat-button [matMenuTriggerFor]="userMenu" class="nav-btn">
+      <mat-icon>person</mat-icon>
+      <span class="nav-label">Hello, {{ authStore.user()?.firstName }}</span>
+    </button>
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Sign out</span>
+      </button>
+    </mat-menu>
+  } @else {
+    <a mat-button routerLink="/login" class="nav-btn">
+      <mat-icon>person_outline</mat-icon>
+      <span class="nav-label">Sign in</span>
+    </a>
+  }
+
+  <a mat-button routerLink="/cart" class="nav-btn">
+    <mat-icon [matBadge]="cartStore.itemCount()" matBadgeColor="warn" [matBadgeHidden]="cartStore.itemCount() === 0" matBadgeSize="small">shopping_cart</mat-icon>
+    <span class="nav-label">Cart</span>
+  </a>
+</mat-toolbar>
+
+<div class="sub-nav">
+  <a routerLink="/products" class="sub-link">All</a>
+  <a routerLink="/products" [queryParams]="{categoryId: 1}" class="sub-link">Electronics</a>
+  <a routerLink="/products" [queryParams]="{categoryId: 2}" class="sub-link">Clothing</a>
+  <a routerLink="/products" [queryParams]="{categoryId: 3}" class="sub-link">Books</a>
+  <a routerLink="/products" [queryParams]="{categoryId: 4}" class="sub-link">Home &amp; Garden</a>
+  <a routerLink="/products" [queryParams]="{categoryId: 5}" class="sub-link">Sports</a>
+</div>

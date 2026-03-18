@@ -1,0 +1,56 @@
+<div class="page">
+  <div class="container">
+    @if (loading()) {
+      <div class="spinner-box"><mat-spinner diameter="40"></mat-spinner></div>
+    } @else if (product()) {
+      <nav class="breadcrumb">
+        <a routerLink="/products">Products</a> &rsaquo;
+        <a routerLink="/products" [queryParams]="{categoryId: product()!.categoryId}">{{ product()!.category?.name }}</a> &rsaquo;
+        <span>{{ product()!.name }}</span>
+      </nav>
+
+      <div class="detail-grid">
+        <div class="img-box">
+          <span class="initial">{{ product()!.name.charAt(0) }}</span>
+        </div>
+
+        <div class="info">
+          <h1 class="name">{{ product()!.name }}</h1>
+          <a class="brand">Visit the {{ product()!.category?.name }} store</a>
+          <div class="price-box">
+            <span class="dollar">$</span><span class="whole">{{ getWhole() }}</span><span class="cents">{{ getCents() }}</span>
+          </div>
+          <p class="free-ship">FREE delivery</p>
+          <h3 class="about-title">About this item</h3>
+          <p class="description">{{ product()!.description }}</p>
+        </div>
+
+        <div class="buy-box">
+          <div class="buy-price">
+            <span class="dollar">$</span><span class="whole">{{ getWhole() }}</span><span class="cents">{{ getCents() }}</span>
+          </div>
+          <p class="free-ship">FREE delivery</p>
+          @if (product()!.stock > 0) {
+            <p class="in-stock">In Stock</p>
+            <div class="qty-row">
+              <label>Qty:</label>
+              <select [(ngModel)]="quantity" class="qty-select">
+                @for (q of qtyOptions(); track q) {
+                  <option [value]="q">{{ q }}</option>
+                }
+              </select>
+            </div>
+            <button mat-flat-button class="add-btn" (click)="addToCart()" [disabled]="addingToCart()">
+              {{ addingToCart() ? 'Adding...' : 'Add to Cart' }}
+            </button>
+            @if (addedMsg()) {
+              <p class="added-msg">&#10003; {{ addedMsg() }}</p>
+            }
+          } @else {
+            <p class="out-stock">Currently unavailable.</p>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,165 @@
+.page {
+  background: #eaeded;
+  min-height: 80vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.count {
+  font-size: 13px;
+  color: #565959;
+}
+
+.sort-field {
+  width: 200px;
+}
+
+.layout {
+  display: flex;
+  gap: 20px;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.filter-group {
+  margin-bottom: 20px;
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  li {
+    font-size: 13px;
+    padding: 4px 0;
+    cursor: pointer;
+    color: #0f1111;
+
+    &:hover {
+      color: #c7511f;
+    }
+
+    &.active {
+      font-weight: 700;
+    }
+  }
+}
+
+.cat-count {
+  color: #565959;
+}
+
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+
+  input {
+    width: 60px;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  span {
+    color: #999;
+  }
+}
+
+.clear-link {
+  color: #007185;
+  font-size: 13px;
+  cursor: pointer;
+  display: block;
+  margin-top: 8px;
+
+  &:hover {
+    color: #c7511f;
+    text-decoration: underline;
+  }
+}
+
+.grid-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.spinner-box {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: #fff;
+  border-radius: 8px;
+
+  h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: #565959;
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.active-page {
+  background: #febd69 !important;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
