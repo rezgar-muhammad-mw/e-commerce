@@ -7,11 +7,12 @@ import { of, throwError } from 'rxjs';
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
   let fixture: ComponentFixture<RegisterComponent>;
-  let authService: jasmine.SpyObj<AuthService>;
+  let authService: { register: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    const authSpy = jasmine.createSpyObj('AuthService', ['register']);
-    authSpy.register.and.returnValue(of({ success: true, data: { accessToken: 'token' } }));
+    const authSpy = {
+      register: vi.fn().mockReturnValue(of({ success: true, data: { accessToken: 'token' } })),
+    };
 
     await TestBed.configureTestingModule({
       imports: [RegisterComponent],
@@ -23,7 +24,7 @@ describe('RegisterComponent', () => {
 
     fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    authService = TestBed.inject(AuthService) as unknown as typeof authService;
   });
 
   it('should create', () => {
@@ -38,7 +39,7 @@ describe('RegisterComponent', () => {
   });
 
   it('should set error on failed registration', () => {
-    authService.register.and.returnValue(
+    authService.register.mockReturnValue(
       throwError(() => ({ error: { message: 'Email already exists.' } }))
     );
     component.email = 'test@test.com';

@@ -3,6 +3,7 @@ import { NavbarComponent } from './navbar.component';
 import { provideRouter } from '@angular/router';
 import { AuthStore } from '../../core/state/auth.store';
 import { CartStore } from '../../core/state/cart.store';
+import { WishlistStore } from '../../core/state/wishlist.store';
 import { AuthService } from '../../core/services/auth.service';
 import { signal } from '@angular/core';
 
@@ -14,7 +15,7 @@ describe('NavbarComponent', () => {
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'products', component: NavbarComponent }]),
         {
           provide: AuthStore,
           useValue: { isAuthenticated: signal(false), user: signal(null) },
@@ -24,8 +25,12 @@ describe('NavbarComponent', () => {
           useValue: { itemCount: signal(0) },
         },
         {
+          provide: WishlistStore,
+          useValue: { itemCount: signal(0) },
+        },
+        {
           provide: AuthService,
-          useValue: { logout: jasmine.createSpy('logout') },
+          useValue: { logout: vi.fn() },
         },
       ],
     }).compileComponents();

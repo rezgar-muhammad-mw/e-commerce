@@ -21,7 +21,7 @@ describe('FooterComponent', () => {
   });
 
   it('should scroll to top', () => {
-    spyOn(window, 'scrollTo');
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     component.scrollToTop();
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
   });

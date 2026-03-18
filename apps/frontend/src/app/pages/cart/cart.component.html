@@ -22,12 +22,12 @@
                 <a [routerLink]="['/products', item.productId]" class="item-name">{{ item.product?.name }}</a>
                 <p class="item-stock">In Stock</p>
                 <div class="item-actions">
-                  <label>Qty:</label>
-                  <select [ngModel]="item.quantity" (ngModelChange)="updateQty(item.id, $event)" class="qty-select">
+                  <label [for]="'qty-' + item.id">Qty:</label>
+                  <select [id]="'qty-' + item.id" [ngModel]="item.quantity" (ngModelChange)="updateQty(item.id, $event)" class="qty-select">
                     @for (q of qtyOptions; track q) { <option [ngValue]="q">{{ q }}</option> }
                   </select>
                   <span class="divider">|</span>
-                  <a class="delete-link" (click)="remove(item.id)">Delete</a>
+                  <button type="button" class="delete-link" (click)="remove(item.id)">Delete</button>
                 </div>
               </div>
               <div class="item-price">{{ item.price * item.quantity | currency }}</div>

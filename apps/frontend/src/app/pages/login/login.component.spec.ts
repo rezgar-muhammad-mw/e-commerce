@@ -7,11 +7,12 @@ import { of, throwError } from 'rxjs';
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
-  let authService: jasmine.SpyObj<AuthService>;
+  let authService: { login: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    const authSpy = jasmine.createSpyObj('AuthService', ['login']);
-    authSpy.login.and.returnValue(of({ success: true, data: { accessToken: 'token' } }));
+    const authSpy = {
+      login: vi.fn().mockReturnValue(of({ success: true, data: { accessToken: 'token' } })),
+    };
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
@@ -23,7 +24,7 @@ describe('LoginComponent', () => {
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    authService = TestBed.inject(AuthService) as unknown as typeof authService;
   });
 
   it('should create', () => {
@@ -36,7 +37,7 @@ describe('LoginComponent', () => {
   });
 
   it('should set error on failed login', () => {
-    authService.login.and.returnValue(
+    authService.login.mockReturnValue(
       throwError(() => ({ error: { message: 'Invalid credentials.' } }))
     );
     component.email = 'test@test.com';

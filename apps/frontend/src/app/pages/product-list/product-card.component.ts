@@ -30,7 +30,7 @@ export class ProductCardComponent {
     return d.toString().padStart(2, '0');
   }
 
-  toggleWishlist(event: Event): void {
+  toggleWishlist(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     if (!this.authStore.isAuthenticated()) {

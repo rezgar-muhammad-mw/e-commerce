@@ -12,6 +12,7 @@
   "plugins": [
     {
       "plugin": "@nx/js/typescript",
+      "exclude": ["apps/frontend"],
       "options": {
         "typecheck": {
           "targetName": "typecheck"

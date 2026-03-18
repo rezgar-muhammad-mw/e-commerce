@@ -44,9 +44,9 @@ describe('ProductListComponent', () => {
   });
 
   it('should detect active filters', () => {
-    expect(component.hasActiveFilters()).toBeFalse();
+    expect(component.hasActiveFilters()).toBe(false);
     component.selectedCategoryId = 1;
-    expect(component.hasActiveFilters()).toBeTrue();
+    expect(component.hasActiveFilters()).toBe(true);
   });
 
   it('should reset all filters', () => {

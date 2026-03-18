@@ -65,6 +65,9 @@
       "executor": "@angular/build:unit-test",
       "options": {}
     },
+    "typecheck": {
+      "command": "echo 'Type checking is performed by the Angular build target'"
+    },
     "serve-static": {
       "continuous": true,
       "executor": "@nx/web:file-server",
