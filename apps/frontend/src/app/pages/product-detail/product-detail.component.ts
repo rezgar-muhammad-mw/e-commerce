@@ -6,15 +6,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
+import { WishlistService } from '../../core/services/wishlist.service';
+import { WishlistStore } from '../../core/state/wishlist.store';
 import { AuthStore } from '../../core/state/auth.store';
 import { IProduct } from '@org/shared';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, MatButtonModule, MatSelectModule, MatProgressSpinnerModule, MatChipsModule],
+  imports: [FormsModule, RouterLink, MatButtonModule, MatSelectModule, MatProgressSpinnerModule, MatChipsModule, MatIconModule],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.scss'],
 })
@@ -23,6 +26,8 @@ export class ProductDetailComponent implements OnInit {
   private router = inject(Router);
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private wishlistService = inject(WishlistService);
+  wishlistStore = inject(WishlistStore);
   private authStore = inject(AuthStore);
   private destroyRef = inject(DestroyRef);
 
@@ -61,6 +66,17 @@ export class ProductDetailComponent implements OnInit {
     return Math.round((p - Math.floor(p)) * 100)
       .toString()
       .padStart(2, '0');
+  }
+
+  toggleWishlist(): void {
+    if (!this.authStore.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.wishlistService
+      .toggleItem(this.product()!.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
   }
 
   addToCart(): void {

@@ -2,6 +2,11 @@
   <mat-card class="card">
     <div class="img-box">
       <span class="initial">{{ product().name.charAt(0) }}</span>
+      <button class="wishlist-toggle" (click)="toggleWishlist($event)" aria-label="Toggle wishlist">
+        <mat-icon [class.wishlisted]="wishlistStore.isInWishlist(product().id)">
+          {{ wishlistStore.isInWishlist(product().id) ? 'favorite' : 'favorite_border' }}
+        </mat-icon>
+      </button>
     </div>
     <mat-card-content class="info">
       <p class="name">{{ product().name }}</p>

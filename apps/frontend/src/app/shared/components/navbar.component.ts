@@ -8,6 +8,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthStore } from '../../core/state/auth.store';
 import { CartStore } from '../../core/state/cart.store';
+import { WishlistStore } from '../../core/state/wishlist.store';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -20,6 +21,7 @@ import { AuthService } from '../../core/services/auth.service';
 export class NavbarComponent {
   authStore = inject(AuthStore);
   cartStore = inject(CartStore);
+  wishlistStore = inject(WishlistStore);
   private authService = inject(AuthService);
   private router = inject(Router);
   searchQuery = '';

@@ -18,4 +18,9 @@ export const API_ROUTES = {
     UPDATE_ITEM: (id: number) => `/api/cart/items/${id}`,
     REMOVE_ITEM: (id: number) => `/api/cart/items/${id}`,
   },
+  WISHLIST: {
+    BASE: '/api/wishlist',
+    ITEMS: '/api/wishlist/items',
+    ITEM: (id: number) => `/api/wishlist/items/${id}`,
+  },
 } as const;

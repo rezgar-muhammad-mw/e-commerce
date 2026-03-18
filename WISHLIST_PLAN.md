@@ -4,7 +4,7 @@
 
 Add a **Wishlist** feature that lets authenticated users save products they're interested in. The wishlist is persisted in the database per user (survives across sessions). Users can add/remove products and move items to their cart.
 
-The backend follows **Clean Architecture** with the **Repository Pattern**, separating domain logic from infrastructure concerns.
+The backend follows the same **modular architecture** as the rest of the application (see `cart/`, `products/`, `categories/` modules), with services using TypeORM repositories directly.
 
 ---
 
@@ -51,50 +51,22 @@ WISHLIST: {
 
 ---
 
-## Backend Architecture — Clean Architecture + Repository Pattern
-
-### Layer Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Presentation Layer (Controller)                                │
-│  wishlist.controller.ts — HTTP concerns, validation, guards     │
-├─────────────────────────────────────────────────────────────────┤
-│  Application Layer (Use Cases / Service)                        │
-│  wishlist.service.ts — orchestrates business logic              │
-│  dto/ — input validation (AddToWishlistDto)                     │
-├─────────────────────────────────────────────────────────────────┤
-│  Domain Layer (Entities + Repository Interfaces)                │
-│  entities/ — Wishlist, WishlistItem (domain models)             │
-│  repositories/ — IWishlistRepository, IWishlistItemRepository   │
-├─────────────────────────────────────────────────────────────────┤
-│  Infrastructure Layer (Repository Implementations)              │
-│  repositories/ — TypeORM implementations of domain interfaces   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Dependency Rule:** Dependencies point inward. The service depends on repository *interfaces*, never on TypeORM directly. The infrastructure layer implements those interfaces.
+## Backend Architecture — NestJS Module Pattern
 
 ### Module Structure
+
+Follows the same flat module structure as `cart/`, `products/`, and `categories/`:
 
 ```
 app/wishlist/
 ├── wishlist.module.ts
-├── wishlist.controller.ts              # Presentation layer
-├── wishlist.service.ts                 # Application layer (use cases)
+├── wishlist.controller.ts
+├── wishlist.service.ts
 ├── dto/
-│   └── add-to-wishlist.dto.ts          # Input validation
-├── domain/
-│   ├── entities/
-│   │   ├── wishlist.entity.ts          # TypeORM entity + domain model
-│   │   └── wishlist-item.entity.ts     # TypeORM entity + domain model
-│   └── repositories/
-│       ├── wishlist.repository.interface.ts       # Abstract contract
-│       └── wishlist-item.repository.interface.ts  # Abstract contract
-└── infrastructure/
-    └── repositories/
-        ├── wishlist.repository.ts          # TypeORM implementation
-        └── wishlist-item.repository.ts     # TypeORM implementation
+│   └── add-to-wishlist.dto.ts
+└── entities/
+    ├── wishlist.entity.ts
+    └── wishlist-item.entity.ts
 ```
 
 ### Database Schema
@@ -116,59 +88,74 @@ app/wishlist/
 - No `status` field (single wishlist per user, no workflow)
 - Unique constraint on `(wishlistId, productId)` to prevent duplicates
 
-### Repository Interfaces (Domain Layer)
+### Entities
 
 ```typescript
-// domain/repositories/wishlist.repository.interface.ts
-export abstract class IWishlistRepository {
-  abstract findByUserId(userId: number): Promise<Wishlist | null>;
-  abstract create(userId: number): Promise<Wishlist>;
-  abstract save(wishlist: Wishlist): Promise<Wishlist>;
+// entities/wishlist.entity.ts
+@Entity('wishlists')
+export class Wishlist implements IWishlist {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  userId: number;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @OneToMany(() => WishlistItem, (item) => item.wishlist, { eager: true, cascade: true })
+  items: WishlistItem[];
+
+  @CreateDateColumn()
+  createdAt: Date;
 }
 
-// domain/repositories/wishlist-item.repository.interface.ts
-export abstract class IWishlistItemRepository {
-  abstract findByWishlistAndProduct(wishlistId: number, productId: number): Promise<WishlistItem | null>;
-  abstract create(wishlistId: number, productId: number): Promise<WishlistItem>;
-  abstract remove(item: WishlistItem): Promise<void>;
-  abstract findByIdAndWishlist(itemId: number, wishlistId: number): Promise<WishlistItem | null>;
-}
-```
+// entities/wishlist-item.entity.ts
+@Entity('wishlist_items')
+@Unique(['wishlistId', 'productId'])
+export class WishlistItem implements IWishlistItem {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-> **Why abstract classes instead of TypeScript interfaces?** NestJS DI uses runtime tokens. Abstract classes serve as both the type contract and the injection token — no separate `@Inject('TOKEN')` needed.
+  @Column()
+  wishlistId: number;
 
-### Repository Implementations (Infrastructure Layer)
+  @ManyToOne(() => Wishlist, (wishlist) => wishlist.items, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'wishlistId' })
+  wishlist: Wishlist;
 
-```typescript
-// infrastructure/repositories/wishlist.repository.ts
-@Injectable()
-export class WishlistRepository extends IWishlistRepository {
-  constructor(
-    @InjectRepository(Wishlist)
-    private readonly repo: Repository<Wishlist>,
-  ) { super(); }
+  @Column()
+  productId: number;
 
-  findByUserId(userId: number): Promise<Wishlist | null> { ... }
-  create(userId: number): Promise<Wishlist> { ... }
-  save(wishlist: Wishlist): Promise<Wishlist> { ... }
+  @ManyToOne(() => Product, { eager: true })
+  @JoinColumn({ name: 'productId' })
+  product: Product;
+
+  @CreateDateColumn()
+  addedAt: Date;
 }
 ```
 
 ### Service (Application Layer)
 
-The service depends only on repository interfaces — no direct TypeORM usage:
+The service uses TypeORM repositories directly via `@InjectRepository`, consistent with how `CartService`, `ProductsService`, etc. work in this project:
 
 ```typescript
 @Injectable()
 export class WishlistService {
   constructor(
-    private readonly wishlistRepo: IWishlistRepository,
-    private readonly wishlistItemRepo: IWishlistItemRepository,
+    @InjectRepository(Wishlist)
+    private readonly wishlistRepo: Repository<Wishlist>,
+    @InjectRepository(WishlistItem)
+    private readonly wishlistItemRepo: Repository<WishlistItem>,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
   ) {}
 
-  async getWishlist(userId: number): Promise<IWishlist> { ... }
-  async addItem(userId: number, productId: number): Promise<IWishlist> { ... }
-  async removeItem(userId: number, itemId: number): Promise<IWishlist> { ... }
+  async getWishlist(userId: number): Promise<Wishlist> { ... }
+  async addItem(userId: number, productId: number): Promise<Wishlist> { ... }
+  async removeItem(userId: number, itemId: number): Promise<Wishlist> { ... }
 }
 ```
 
@@ -197,11 +184,7 @@ export class WishlistController {
 @Module({
   imports: [TypeOrmModule.forFeature([Wishlist, WishlistItem, Product])],
   controllers: [WishlistController],
-  providers: [
-    WishlistService,
-    { provide: IWishlistRepository, useClass: WishlistRepository },
-    { provide: IWishlistItemRepository, useClass: WishlistItemRepository },
-  ],
+  providers: [WishlistService],
   exports: [WishlistService],
 })
 export class WishlistModule {}
@@ -300,46 +283,38 @@ WishlistService (providedIn: 'root')
 2. Add `WISHLIST` routes to `API_ROUTES`
 3. Export from barrel file
 
-### Phase 2: Backend — Domain Layer
+### Phase 2: Backend — Entities
 4. Create `Wishlist` entity
 5. Create `WishlistItem` entity
-6. Create `IWishlistRepository` (abstract class)
-7. Create `IWishlistItemRepository` (abstract class)
 
-### Phase 3: Backend — Infrastructure Layer
-8. Create `WishlistRepository` (TypeORM implementation)
-9. Create `WishlistItemRepository` (TypeORM implementation)
+### Phase 3: Backend — Module, Service, Controller
+6. Create `AddToWishlistDto`
+7. Create `WishlistService` (uses TypeORM repositories directly)
+8. Create `WishlistController`
+9. Create `WishlistModule`
+10. Register `WishlistModule` in `AppModule`
 
-### Phase 4: Backend — Application + Presentation
-10. Create `AddToWishlistDto`
-11. Create `WishlistService` (depends on repository interfaces)
-12. Create `WishlistController`
-13. Create `WishlistModule` (wires interfaces to implementations)
-14. Register `WishlistModule` in `AppModule`
+### Phase 4: Frontend Core
+11. Create `WishlistStore`
+12. Create `WishlistService`
+13. Add `/wishlist` route to `app.routes.ts`
 
-### Phase 5: Frontend Core
-15. Create `WishlistStore`
-16. Create `WishlistService`
-17. Add `/wishlist` route to `app.routes.ts`
+### Phase 5: Frontend UI
+14. Create `WishlistComponent` (page)
+15. Add heart toggle to `ProductCardComponent`
+16. Add heart toggle to `ProductDetailComponent`
+17. Add wishlist icon + badge to `NavbarComponent`
 
-### Phase 6: Frontend UI
-18. Create `WishlistComponent` (page)
-19. Add heart toggle to `ProductCardComponent`
-20. Add heart toggle to `ProductDetailComponent`
-21. Add wishlist icon + badge to `NavbarComponent`
-
-### Phase 7: Integration
-22. Load wishlist on app init (when authenticated)
-23. "Move to Cart" integration (calls CartService + WishlistService)
-24. Clear wishlist store on logout
+### Phase 6: Integration
+18. Load wishlist on app init (when authenticated)
+19. "Move to Cart" integration (calls CartService + WishlistService)
+20. Clear wishlist store on logout
 
 ---
 
 ## Design Notes
 
-- **Clean Architecture:** Service depends on repository interfaces (domain layer), not TypeORM. Swapping the ORM only requires new infrastructure implementations.
-- **Repository Pattern:** Abstract classes as DI tokens. NestJS module wires `{ provide: IWishlistRepository, useClass: WishlistRepository }`.
+- **Module pattern:** Follows the same flat module structure as `cart/`, `products/`, `categories/` — service injects TypeORM repositories directly via `@InjectRepository`, no abstract interfaces or infrastructure layer
 - **Auth:** All endpoints require JWT (same as cart)
 - **Eager loading:** Product data loaded with wishlist items
 - **Frontend:** Follows CLAUDE.md Angular best practices — `OnPush`, signals, `input()`/`output()`, `@if`/`@for`, `takeUntilDestroyed()`, separate HTML/SCSS/spec files, `class` bindings, `providedIn: 'root'` services
-- **Testability:** Repository interfaces make the service unit-testable with mocks — no database needed

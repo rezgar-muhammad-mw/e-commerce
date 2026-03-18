@@ -43,6 +43,10 @@
             <button mat-flat-button class="add-btn" (click)="addToCart()" [disabled]="addingToCart()">
               {{ addingToCart() ? 'Adding...' : 'Add to Cart' }}
             </button>
+            <button mat-stroked-button class="wishlist-btn" (click)="toggleWishlist()">
+              <mat-icon>{{ wishlistStore.isInWishlist(product()!.id) ? 'favorite' : 'favorite_border' }}</mat-icon>
+              {{ wishlistStore.isInWishlist(product()!.id) ? 'Remove from Wishlist' : 'Add to Wishlist' }}
+            </button>
             @if (addedMsg()) {
               <p class="added-msg">&#10003; {{ addedMsg() }}</p>
             }
