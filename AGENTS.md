@@ -31,6 +31,7 @@ libs/shared/src/lib/
 │   ├── category.interface.ts   # ICategory
 │   ├── user.interface.ts       # IUser, IAuthResponse
 │   ├── cart.interface.ts       # ICart, ICartItem
+│   ├── wishlist.interface.ts   # IWishlist, IWishlistItem
 │   └── api-response.interface.ts  # IApiResponse<T>
 └── constants/
     └── api-routes.ts           # API_ROUTES constant (all endpoint paths)
@@ -114,6 +115,15 @@ apps/backend/src/
         └── entities/
             ├── cart.entity.ts
             └── cart-item.entity.ts
+    └── wishlist/           # User wishlist
+        ├── wishlist.module.ts
+        ├── wishlist.controller.ts
+        ├── wishlist.service.ts
+        ├── dto/
+        │   └── add-to-wishlist.dto.ts
+        └── entities/
+            ├── wishlist.entity.ts
+            └── wishlist-item.entity.ts
 ```
 
 ### Database Schema (ERD)
@@ -133,19 +143,31 @@ apps/backend/src/
       │             │ updatedAt    │
       │             └──────┬───────┘
       │                    │
-┌─────┴─────┐       ┌──────┴───────┐
-│   carts   │       │  cart_items   │
-├───────────┤       ├──────────────┤
-│ id (PK)   │       │ id (PK)      │
-│ userId(FK)│       │ cartId (FK)  │──── carts.id
-│ status    │       │ productId(FK)│──── products.id
-│ createdAt │       │ quantity     │
-└───────────┘       │ price        │  ← snapshot at time of add
-                    └──────────────┘
+┌─────┴──────────────────────────────────┬────────────────────────┐
+│                                        │                        │
+┌─────────────┐         ┌──────────────────────┐      ┌───────────────────┐
+│   carts     │         │   cart_items   │      │   wishlists    │
+├─────────────┤         ├──────────────────────┤      ├───────────────────┤
+│ id (PK)     │         │ id (PK)        │      │ id (PK)        │
+│ userId (FK) │         │ cartId (FK)    │──┐   │ userId (FK)    │──┐
+│ status      │         │ productId (FK) │──┼───│ createdAt      │  │
+│ createdAt   │         │ quantity       │  │   └───────────────────┘  │
+└─────────────┘         │ price          │  │                          │
+                        └──────────────────────┘      ┌──────────────────────────┐
+                                                       │   wishlist_items  │
+                                                       ├──────────────────────────┤
+                                                       │ id (PK)          │
+                                                       │ wishlistId (FK)──┘
+                                                       │ productId (FK)───────────┘
+                                                       │ addedAt          │
+                                                       └──────────────────────────┘
 ```
 
 **Key relationships:**
 - `User` 1→N `Cart` (a user can have multiple carts; only one is `active` at a time)
+- `User` 1→1 `Wishlist` (one wishlist per user; cascade delete)
+- `Wishlist` 1→N `WishlistItem` (cascade delete)
+- `WishlistItem` N→1 `Product` (no snapshot — shows current product data)
 - `Category` 1→N `Product` (eager-loaded — products always include their category)
 - `Cart` 1→N `CartItem` (cascade delete, eager-loaded)
 - `CartItem` N→1 `Product` (eager-loaded)
@@ -171,6 +193,9 @@ apps/backend/src/
 | `POST` | `/api/cart/items` | JWT | Add item to cart |
 | `PATCH` | `/api/cart/items/:id` | JWT | Update cart item quantity |
 | `DELETE` | `/api/cart/items/:id` | JWT | Remove item from cart |
+| `GET` | `/api/wishlist` | JWT | Get current user's wishlist |
+| `POST` | `/api/wishlist/items` | JWT | Add item to wishlist |
+| `DELETE` | `/api/wishlist/items/:id` | JWT | Remove item from wishlist |
 
 ### Product Search & Filtering
 
@@ -246,12 +271,14 @@ apps/frontend/src/
     │   │   ├── auth.service.ts       # Login, register, logout
     │   │   ├── product.service.ts    # Product CRUD + search
     │   │   ├── category.service.ts   # Category listing
-    │   │   └── cart.service.ts       # Cart operations
+    │   │   ├── cart.service.ts       # Cart operations
+    │   │   └── wishlist.service.ts   # Wishlist operations
     │   ├── guards/
     │   │   └── auth.guard.ts         # Redirects to /login if unauthenticated
     │   └── state/
     │       ├── auth.store.ts         # Signal-based auth state
-    │       └── cart.store.ts         # Signal-based cart state
+    │       ├── cart.store.ts         # Signal-based cart state
+    │       └── wishlist.store.ts     # Signal-based wishlist state
     ├── pages/                 # Route-level components (lazy-loaded)
     │   ├── home/
     │   │   └── home.component.ts           # Hero, categories, featured products
@@ -262,6 +289,8 @@ apps/frontend/src/
     │   │   └── product-detail.component.ts # Detail view, add-to-cart
     │   ├── cart/
     │   │   └── cart.component.ts           # Cart items, quantity edit, totals
+    │   ├── wishlist/
+    │   │   └── wishlist.component.ts       # Wishlist items, add-to-cart
     │   ├── login/
     │   │   └── login.component.ts
     │   └── register/
@@ -277,22 +306,23 @@ apps/frontend/src/
 Instead of NgRx, the app uses lightweight signal-based stores:
 
 ```
-AuthStore                        CartStore
-┌──────────────────────┐        ┌──────────────────────┐
-│ _token: Signal       │        │ _cart: Signal<ICart>  │
-│ _user: Signal<IUser> │        │                      │
-├──────────────────────┤        ├──────────────────────┤
-│ token (readonly)     │        │ cart (readonly)       │
-│ user (readonly)      │        │ itemCount (computed)  │
-│ isAuthenticated      │        │ totalPrice (computed) │
-│   (computed)         │        │                      │
-├──────────────────────┤        ├──────────────────────┤
-│ setAuth(token, user) │        │ setCart(cart)         │
-│ clearAuth()          │        │ clearCart()           │
-└──────────────────────┘        └──────────────────────┘
+AuthStore                        CartStore                        WishlistStore
+┌──────────────────────┐        ┌──────────────────────┐        ┌──────────────────────┐
+│ _token: Signal       │        │ _cart: Signal<ICart>  │        │ _wishlist:           │
+│ _user: Signal<IUser> │        │                      │        │   Signal<IWishlist>  │
+├──────────────────────┤        ├──────────────────────┤        ├──────────────────────┤
+│ token (readonly)     │        │ cart (readonly)       │        │ wishlist (readonly)  │
+│ user (readonly)      │        │ itemCount (computed)  │        │ itemCount (computed) │
+│ isAuthenticated      │        │ totalPrice (computed) │        │                      │
+│   (computed)         │        │                      │        ├──────────────────────┤
+├──────────────────────┤        ├──────────────────────┤        │ setWishlist(wishlist)│
+│ setAuth(token, user) │        │ setCart(cart)         │        │ addItem(productId)   │
+│ clearAuth()          │        │ clearCart()           │        │ removeItem(itemId)   │
+└──────────────────────┘        └──────────────────────┘        │ clearWishlist()      │
+                                                                  └──────────────────────┘
 ```
 
-**Why Signals over NgRx?** For the current scope (auth + cart), full NgRx would add unnecessary boilerplate. Signals provide reactive state with zero setup. If the app grows, these stores can migrate to `@ngrx/signals` with minimal changes.
+**Why Signals over NgRx?** For the current scope (auth + cart + wishlist), full NgRx would add unnecessary boilerplate. Signals provide reactive state with zero setup. If the app grows, these stores can migrate to `@ngrx/signals` with minimal changes.
 
 ### Routing
 
@@ -303,6 +333,7 @@ All routes use **lazy loading** via `loadComponent()` for optimal code splitting
 /products        → ProductListComponent
 /products/:id    → ProductDetailComponent
 /cart            → CartComponent (protected by authGuard)
+/wishlist        → WishlistComponent (protected by authGuard)
 /login           → LoginComponent
 /register        → RegisterComponent
 /**              → Redirect to /
